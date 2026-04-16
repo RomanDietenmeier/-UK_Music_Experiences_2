@@ -260,11 +260,8 @@
 		<li><strong>What the platform will do.</strong> Musicians can search a UK map for classes, workshops, ensembles, performances, lessons, and music projects near them — filtering by instrument, age group, and distance. Organisations can register, log in, and add / edit / delete their own listings once they're verified by an admin.</li>
 		<li><strong>Hosting.</strong> A reasonable worst-case estimate is around <strong>€10 a month</strong>, roughly <strong>€240 over two years</strong>. That's for a small dedicated server with automatic HTTPS and daily backups.</li>
 		<li><strong>Capacity.</strong> PocketBase (the database engine used here) can comfortably handle the traffic levels this kind of platform realistically sees, with plenty of headroom.</li>
-		<li><strong>No recurring software fees.</strong> Everything is open-source. No per-user licence, no mapping-API bill, no SaaS lock-in. If the hosting provider ever disappears, moving to another one is a one-hour job.</li>
+		<li><strong>No recurring software fees.</strong> Everything is open-source. No per-user licence, no mapping-API bill, no SaaS lock-in. If the hosting provider ever disappears, moving to another one is roughly a day of work.</li>
 	</ul>
-	<p style="margin-top: 10px; font-size: 10pt; color: var(--ink-soft);">
-		A quick note on the <strong>€1150 initial budget</strong>: that figure covers development work and your own time on the project, not just hosting. Hosting is a small slice of the overall picture — this document focuses on the hosting and infrastructure side so that part is clearly understood.
-	</p>
 </section>
 
 <h2>What the platform will do</h2>
@@ -288,8 +285,7 @@
 <h3>For the admin (you)</h3>
 <ul>
 	<li><strong>Verify new organisations</strong> before they can publish anything — a deliberate safeguard, especially important where listings involve minors.</li>
-	<li><strong>Admin panel</strong> built into PocketBase — a spreadsheet-style view of every record, with search, filter, sort, inline edit, CSV export, and CSV import. No developer needed to manage data.</li>
-	<li><strong>Import from Google Sheets.</strong> Export a sheet as CSV, drop it into the admin panel's import tool — done.</li>
+	<li><strong>Admin panel</strong> built into PocketBase — a spreadsheet-style view of every record, with search, filter, sort, and inline editing. No developer needed to manage data day-to-day.</li>
 </ul>
 
 <figure>
@@ -328,11 +324,11 @@
 	<li><strong>No paid third-party services</strong> for maps, mailing, postcode lookups, or anything else required to make the site work.</li>
 </ul>
 
-<p>If the hosting provider ever goes out of business, the entire platform is a folder you can copy to another server — running again in under an hour.</p>
+<p>If the hosting provider ever goes out of business, the entire platform is a folder you can copy to another server — typically about a day of work to get running again.</p>
 
 <h2>The admin side</h2>
 
-<p>PocketBase ships with its own admin interface — a web page the admin (you) logs into to see every organisation, opportunity, and user. It works like a spreadsheet, with search and filters. Editing a record is a click. Exporting a CSV is a button. Importing a CSV from, say, a Google Sheet is also a button.</p>
+<p>PocketBase ships with its own admin interface — a web page the admin (you) logs into to see every organisation, opportunity, and user. It works like a spreadsheet, with search and filters. Editing a record is a click.</p>
 
 <figure>
 	<img src="./images/pocketbase-admin.png" alt="Example of the PocketBase admin panel showing the opportunities collection with columns for organisation, title, description, type, instruments, and location">
@@ -355,13 +351,8 @@
 <p>What that monthly fee includes:</p>
 <ul>
 	<li><strong>HTTPS</strong> (the green padlock icon) managed automatically — certificates are free and renewed without any manual intervention.</li>
-	<li><strong>Daily backups</strong> of the database and any uploaded files, kept for a week.</li>
 	<li><strong>No vendor lock-in.</strong> Hosting providers come and go; the whole platform is a folder. Switching is straightforward.</li>
 </ul>
-
-<div class="callout">
-	<strong>A note on the €1150 figure.</strong> That was the starting estimate for the whole project, which includes development, your own time, and administrative overhead. Hosting is only a small part of it. This report is about the hosting and infrastructure side — confirming that ongoing costs stay low, so the bulk of the budget can go towards the work of building and running the platform.
-</div>
 
 <h2>How many people can it handle?</h2>
 
@@ -393,19 +384,15 @@
 	<tbody>
 		<tr>
 			<td>Three user types: musicians, organisations, researchers</td>
-			<td>Musicians and organisations are the two primary groups. A dedicated "researcher" role isn't strictly needed up front — researchers can be served by the admin's built-in CSV export. A research-specific role can be added later if the need becomes concrete.</td>
+			<td>Musicians and organisations are the two primary groups. A dedicated "researcher" role isn't strictly needed up front. Researchers could instead be served by a daily pre-built CSV (or similar static download) made available on the website. A research-specific role with tailored views can be added later if the need becomes concrete.</td>
 		</tr>
 		<tr>
 			<td>Instrument search</td>
 			<td>A search field on the public page; can be a free-text box or a dropdown of common instruments.</td>
 		</tr>
 		<tr>
-			<td>Age-group search</td>
-			<td>A multi-select of checkboxes ("click all age ranges that apply") works naturally — aligning with the kickoff note about selecting all relevant ranges.</td>
-		</tr>
-		<tr>
-			<td>Organisations can offer performances</td>
-			<td>"Performance" is one of the opportunity categories alongside classes, ensembles, workshops, lessons, and projects.</td>
+			<td>Age-group search &mdash; &ldquo;click all age ranges that apply&rdquo;</td>
+			<td>A multi-select of checkboxes aligns with the kickoff note: pick every age range that applies rather than typing one value. Straightforward to implement as a set of checkboxes.</td>
 		</tr>
 		<tr>
 			<td>Participant limits</td>
@@ -413,23 +400,11 @@
 		</tr>
 		<tr>
 			<td>Participants restricted by where they live</td>
-			<td>Organisations can mark a listing as local-only and specify a postcode area or region. The platform already stores every UK postcode, so the location check is straightforward.</td>
+			<td>Organisations can mark a listing as local-only and attach a postcode area or region. If users provide their own postcode when they register, the platform can use it to filter listings &mdash; either hiding location-restricted events from people outside the eligible area, or preventing them from registering. Every UK postcode is already stored, so the location check is straightforward.</td>
 		</tr>
 		<tr>
 			<td>An API will probably be needed</td>
-			<td>A full REST API comes built-in with PocketBase at no extra cost — no separate development work is required for it.</td>
-		</tr>
-		<tr>
-			<td>"Find things near you that you like"</td>
-			<td>This is the core of the public experience: map-first, with proximity search by postcode or place name and a radius picker.</td>
-		</tr>
-		<tr>
-			<td>Organisations edit their own profile</td>
-			<td>A standard form inside the organisation's authenticated area. Name, description, address(es), website, contact info.</td>
-		</tr>
-		<tr>
-			<td>Organisations add / edit / delete their listings</td>
-			<td>Same area of the site. Forms for each listing with all relevant fields.</td>
+			<td>A full REST API comes built-in with PocketBase at no extra cost &mdash; no separate development work is required for it.</td>
 		</tr>
 		<tr>
 			<td>Expiry dates on listings</td>
@@ -437,19 +412,7 @@
 		</tr>
 		<tr>
 			<td>Enter future dates in advance (e.g. 10 days out)</td>
-			<td>Same mechanism — a start / end date pair.</td>
-		</tr>
-		<tr>
-			<td>Organisations with multiple addresses</td>
-			<td>An organisation can keep a list of addresses; each listing is attached to one of them.</td>
-		</tr>
-		<tr>
-			<td>Protection for minors</td>
-			<td>Organisations cannot publish anything until an admin verifies them. Verification is deliberately manual.</td>
-		</tr>
-		<tr>
-			<td>Social-network trust signals</td>
-			<td>An optional extension: offering "log in with Google" or similar as a trust signal is feasible, but not required for the core platform to function.</td>
+			<td>Same mechanism &mdash; a start / end date pair.</td>
 		</tr>
 		<tr>
 			<td>Account verification</td>
@@ -457,23 +420,11 @@
 		</tr>
 		<tr>
 			<td>Should users be allowed to verify organisations?</td>
-			<td>Keeping verification admin-only is the safer default — especially given the safeguarding stakes. Worth reconsidering later only if volume makes admin-only verification too slow.</td>
+			<td>Keeping verification admin-only is the safer default &mdash; especially given the safeguarding stakes. Worth reconsidering later only if volume makes admin-only verification too slow.</td>
 		</tr>
 		<tr>
 			<td>Statistical evaluation over time and regions</td>
-			<td>The data is naturally there — number of listings, type, date, region. A small charts page can be added as a separate, bounded piece of work.</td>
-		</tr>
-		<tr>
-			<td>Bulk entry (Quizlet-style)</td>
-			<td>The admin panel supports CSV import out of the box, which covers the main use case without extra development.</td>
-		</tr>
-		<tr>
-			<td>Import from Google Sheets</td>
-			<td>Save the sheet as CSV, then use the admin CSV import. No custom integration needed.</td>
-		</tr>
-		<tr>
-			<td>Click all age ranges that apply</td>
-			<td>Straightforward — a set of checkboxes rather than a single text field.</td>
+			<td>The data is naturally there &mdash; number of listings, type, date, region. A small charts page can be added as a separate, bounded piece of work.</td>
 		</tr>
 		<tr>
 			<td>What is unnecessary, impossible, or simplest?</td>
@@ -495,11 +446,10 @@
 			<li>Organisation accounts: register, log in, log out</li>
 			<li>Organisation dashboard for managing their own listings</li>
 			<li>Admin verification flow for new organisations</li>
-			<li>Built-in admin panel (PocketBase) for data management, CSV import / export</li>
+			<li>Built-in admin panel (PocketBase) for data management</li>
 			<li>Automatic HTTPS (secure green-padlock connection)</li>
 			<li>Every UK postcode and every named UK town / village for proximity search</li>
 			<li>Deployable as a standalone site or under a subfolder of an existing domain</li>
-			<li>Daily backups of all data</li>
 		</ul>
 	</div>
 	<div>
@@ -511,8 +461,6 @@
 			<li>Custom icons per opportunity category on the map</li>
 			<li>Email notifications (password reset, "matching opportunity" alerts)</li>
 			<li>"Log in with Google" as an additional trust signal</li>
-			<li>Researcher role with tailored data views</li>
-			<li>User-facing bulk listing entry</li>
 		</ul>
 	</div>
 </div>

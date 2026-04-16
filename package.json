@@ -1,0 +1,13 @@
+{
+  "name": "uk-music-experiences-scripts",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Seed scripts for the UK Music Experiences PocketBase setup",
+  "scripts": {
+    "seed": "node scripts/seed.mjs"
+  },
+  "dependencies": {
+    "pocketbase": "^0.26.8"
+  }
+}

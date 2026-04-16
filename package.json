@@ -10,7 +10,8 @@
     "faker": "node scripts/faker.mjs",
     "app:dev": "npm --prefix app run dev",
     "app:build": "cross-env BASE_PATH= npm --prefix app run build",
-    "app:build:uk": "cross-env BASE_PATH=/uk npm --prefix app run build"
+    "app:build:uk": "cross-env BASE_PATH=/uk npm --prefix app run build",
+    "app:test": "npm --prefix app run test"
   },
   "dependencies": {
     "pocketbase": "^0.26.8"

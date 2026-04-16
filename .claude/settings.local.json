@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -f -o /dev/null http://localhost:5173/search)",
+      "Bash(curl -s http://localhost:5173/search)",
+      "Bash(curl -s \"http://127.0.0.1:8090/api/collections/opportunities/records?perPage=10\")",
+      "Bash(curl -s \"http://127.0.0.1:8090/api/collections/postcodes/records?perPage=1&filter=$\\(printf '%s' 'postcode=\"GU9 7QR\"')"
+    ]
+  }
+}

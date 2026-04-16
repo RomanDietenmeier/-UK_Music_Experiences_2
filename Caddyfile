@@ -1,0 +1,33 @@
+# Caddyfile — local development only.
+# Run with `npm run caddy` (or `caddy run`) from the repo root.
+# Not used in production — see CLAUDE.md §Caddy Configuration for the real thing.
+{
+	auto_https off
+}
+
+:8080 {
+	# Proxy PocketBase — same paths as production so the app behaves identically
+	# whether it calls http://127.0.0.1:8090 direct (default) or goes through Caddy.
+	handle /api/* {
+		reverse_proxy localhost:8090
+	}
+	handle /_/* {
+		reverse_proxy localhost:8090
+	}
+
+	# Subsite build (npm run app:build:uk). Browse: http://localhost:8080/uk/
+	# handle_path strips the /uk prefix before try_files, so the SPA fallback
+	# correctly resolves to app/build/index.html rather than /uk/index.html.
+	handle_path /uk/* {
+		root * ./app/build
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Root build (npm run app:build). Browse: http://localhost:8080/
+	handle {
+		root * ./app/build
+		try_files {path} /index.html
+		file_server
+	}
+}

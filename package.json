@@ -11,7 +11,8 @@
     "app:dev": "npm --prefix app run dev",
     "app:build": "cross-env BASE_PATH= npm --prefix app run build",
     "app:build:uk": "cross-env BASE_PATH=/uk npm --prefix app run build",
-    "app:test": "npm --prefix app run test"
+    "app:test": "npm --prefix app run test",
+    "caddy": "caddy run"
   },
   "dependencies": {
     "pocketbase": "^0.26.8"

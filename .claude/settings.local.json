@@ -20,7 +20,29 @@
       "Bash(netstat -ano)",
       "Bash(curl -s http://localhost:5175/)",
       "Bash(curl -s -o /dev/null -w \"HTTP: %{http_code}\\\\nContent-Type: %{content_type}\\\\nSize: %{size_download}\\\\n\" http://localhost:5175/uk/)",
-      "Bash(curl -s http://localhost:61585/uk/)"
+      "Bash(curl -s http://localhost:61585/uk/)",
+      "Bash(curl -s -L \"https://caddyserver.com/docs/command-line\" -o /tmp/caddy_cli.html)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -L \"https://caddyserver.com/docs/caddyfile/directives/handle\" -o /tmp/caddy_handle.html)",
+      "Bash(curl -s -L \"https://caddyserver.com/docs/caddyfile/directives/try_files\" -o /tmp/caddy_tryfiles.html)",
+      "Bash(curl -s -L \"https://caddyserver.com/docs/caddyfile/directives/uri\" -o /tmp/caddy_uri.html)",
+      "Bash(curl -s -L \"https://caddyserver.com/docs/automatic-https\" -o /tmp/caddy_https.html)",
+      "Bash(curl -s -L \"https://caddyserver.com/docs/caddyfile/directives\" -o /tmp/caddy_directives.html)",
+      "Bash(curl -s -L \"https://caddyserver.com/docs/caddyfile/patterns\" -o /tmp/caddy_patterns.html)",
+      "Bash(curl -s -L \"https://github.com/caddyserver/caddy/releases/latest\" -o /tmp/caddy_release.html -w \"%{url_effective}\\\\n\")",
+      "Bash(sed 's/<[^>]*>//g')",
+      "Bash(caddy validate *)",
+      "Bash(caddy fmt *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -f -o /dev/null http://localhost:8080/uk/)",
+      "Bash(curl -s http://localhost:8080/uk/)",
+      "Bash(curl -s -o /dev/null -w \"HTTP: %{http_code}\\\\n\" http://localhost:8080/uk/opportunity/fake-id)",
+      "Bash(curl -s -o /dev/null -w \"HTTP: %{http_code}\\\\n\" http://localhost:8080/uk/_app/immutable/entry/app.D-nqYKzF.js)",
+      "Bash(curl -s -o /dev/null -w \"HTTP: %{http_code}\\\\n\" http://localhost:8080/_/)",
+      "Bash(curl -s http://localhost:8080/api/collections/opportunities/records?perPage=1)",
+      "Bash(curl -s http://localhost:8080/)",
+      "Bash(curl -s -o /dev/null -w \"HTTP: %{http_code}\\\\n\" http://localhost:8080/search)",
+      "Bash(curl -s -o /dev/null -w \"HTTP: %{http_code}\\\\n\" http://localhost:8080/opportunity/fake-id)"
     ]
   }
 }

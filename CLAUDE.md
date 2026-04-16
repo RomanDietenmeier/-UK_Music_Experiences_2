@@ -494,6 +494,31 @@ yoursite.com {
 }
 ```
 
+### Subsite deployment variant (e.g. `mainsite.com/uk/`)
+
+If the app lives under a sub-path of an existing domain, use `handle_path` to strip the prefix before serving the SPA. Everything else — the PocketBase proxy, automatic HTTPS, systemd management — is unchanged.
+
+```
+mainsite.com {
+    handle /api/* {
+        reverse_proxy localhost:8090
+    }
+    handle /_/* {
+        reverse_proxy localhost:8090
+    }
+
+    handle_path /uk/* {
+        root * /var/www/site
+        try_files {path} /index.html
+        file_server
+    }
+
+    # ...any other sites / handlers on mainsite.com go here
+}
+```
+
+The app must have been built with `npm run app:build:uk` (or another `BASE_PATH` value matching the prefix) so that the asset URLs in `index.html` carry the same prefix Caddy is stripping.
+
 ---
 
 ## Scripts
@@ -543,6 +568,20 @@ Shared helpers (env loading, admin auth) live in `scripts/_common.mjs`.
 3. PocketBase and Caddy are already running as systemd services
 4. Static file changes are served immediately by Caddy (no restart needed)
 5. PocketBase schema changes: use PocketBase admin at `yoursite.com/_/`
+
+### Local Caddy (optional — for testing the subsite build)
+
+`Caddyfile` at the repo root is a dev-only config that mirrors production behaviour on port 8080:
+
+1. One-time install (skip if already present): `winget install CaddyServer.Caddy` or `scoop install caddy`
+2. Make sure PocketBase is running: `./pocketbase.exe serve`
+3. Build for whichever layout you want to test:
+   - Root: `npm run app:build`
+   - Subsite: `npm run app:build:uk`
+4. In a new terminal: `npm run caddy`
+5. Open `http://localhost:8080/` (root build) or `http://localhost:8080/uk/` (subsite build)
+
+Caddy also proxies `/api/*` and `/_/*` to PocketBase — harmless noise unless you flip `PUBLIC_PB_URL=http://localhost:8080` and rebuild to test same-origin behaviour.
 
 ### Deploying as a subsite (e.g. `https://mainsite.com/uk/`)
 

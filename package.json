@@ -7,9 +7,15 @@
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "verify": "node scripts/verify.mjs",
-    "faker": "node scripts/faker.mjs"
+    "faker": "node scripts/faker.mjs",
+    "app:dev": "npm --prefix app run dev",
+    "app:build": "cross-env BASE_PATH= npm --prefix app run build",
+    "app:build:uk": "cross-env BASE_PATH=/uk npm --prefix app run build"
   },
   "dependencies": {
     "pocketbase": "^0.26.8"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }

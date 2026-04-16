@@ -151,16 +151,19 @@ export default {
 ```
 
 ### Route Structure
+
+The SvelteKit app lives in the `app/` subdirectory at the repo root (sibling to `scripts/`, `pb_data/`, etc.). All paths below are relative to `app/`.
+
 ```
-src/
+app/src/
 ├── lib/
-│   ├── pocketbase.js          # PocketBase client singleton
-│   ├── cache.js                # Client-side search cache (see below)
-│   ├── geo.js                  # Haversine distance calculation
+│   ├── pocketbase.ts          # PocketBase client singleton
+│   ├── cache.ts                # Client-side search cache (see below)
+│   ├── geo.ts                  # Haversine distance calculation
 │   ├── stores/
-│   │   ├── auth.js             # Auth state store
-│   │   ├── filters.js          # Search/filter state (query, type, proximity)
-│   │   └── search.js           # Search state + cached results
+│   │   ├── auth.ts             # Auth state store
+│   │   ├── filters.ts          # Search/filter state (query, type, proximity)
+│   │   └── search.ts           # Search state + cached results
 │   └── components/
 │       ├── LeafletMap.svelte   # Interactive Leaflet map with markers + popups
 │       ├── OpportunityCard.svelte
@@ -201,17 +204,17 @@ src/
 ```
 
 ### PocketBase Client Setup
-```js
-// src/lib/pocketbase.js
+```ts
+// src/lib/pocketbase.ts
 import PocketBase from 'pocketbase';
+import { PUBLIC_PB_URL } from '$env/static/public';
 
-const pb = new PocketBase('https://yoursite.com');
-// In development: new PocketBase('http://127.0.0.1:8090');
+const pb = new PocketBase(PUBLIC_PB_URL);
 
 export default pb;
 ```
 
-Use the environment-appropriate URL. In development, PocketBase runs locally. In production, Caddy proxies `/api/*` to PocketBase.
+The URL comes from `app/.env` via the `PUBLIC_PB_URL` variable (SvelteKit inlines `PUBLIC_` vars at build time). In development, PocketBase runs locally on `http://127.0.0.1:8090`. In production, set `PUBLIC_PB_URL` to the public origin (e.g. `https://yoursite.com`) — Caddy proxies `/api/*` and `/_/*` to PocketBase.
 
 ---
 
@@ -528,16 +531,38 @@ Shared helpers (env loading, admin auth) live in `scripts/_common.mjs`.
 6. `npm install` then `npm run setup` — creates all collections and imports the CSVs
 7. `npm run verify` — confirms the schema matches
 8. `npm run faker` — seeds a demo org + opportunities so you can see data in the UI
-9. `cd app && npm run dev` — SvelteKit dev server on localhost:5173
+9. `cd app && cp .env.example .env` — copy the frontend env template (sets `PUBLIC_PB_URL`)
+10. `cd app && npm install` — install SvelteKit app deps (only needed once, or after `git pull`)
+11. `cd app && npm run dev` — SvelteKit dev server on localhost:5173
 
 **Note:** Leaflet CSS must be imported in your map component: `import 'leaflet/dist/leaflet.css'`
 
 ### Production deployment:
-1. Build SvelteKit: `npm run build`
-2. Upload: `rsync -avz build/ user@server:/var/www/site/`
+1. Build SvelteKit: `npm run app:build` (or `npm run app:build:uk` for the /uk/ subsite — see below)
+2. Upload: `rsync -avz app/build/ user@server:/var/www/site/`
 3. PocketBase and Caddy are already running as systemd services
 4. Static file changes are served immediately by Caddy (no restart needed)
 5. PocketBase schema changes: use PocketBase admin at `yoursite.com/_/`
+
+### Deploying as a subsite (e.g. `https://mainsite.com/uk/`)
+
+The SPA fallback (`index.html`) serves at every URL depth, so asset paths must be baked in at build time — relative paths like `./` can't work from unknown depths. `app/svelte.config.js` reads `kit.paths.base` from the `BASE_PATH` env var for exactly this case.
+
+The root `package.json` has pre-wired npm scripts using `cross-env` so the same command works in any shell (PowerShell, cmd, bash):
+
+```bash
+# From repo root
+npm run app:build           # root deployment (no base path)
+npm run app:build:uk        # subsite at /uk/ — yields /uk/_app/... in index.html
+npm run app:dev             # dev server on localhost:5173
+```
+
+To add a new subsite target, copy the `app:build:uk` script in `package.json` and change the `BASE_PATH` value. The resulting `app/build/` can be dropped anywhere under that path on the server and all routes (including nested dynamic ones like `/uk/opportunity/abc`) resolve correctly.
+
+Rules:
+- `BASE_PATH` must start with `/` and not end with `/` (`/uk`, not `uk/` or `/uk/`)
+- `PUBLIC_PB_URL` is independent — always the full PocketBase origin (e.g. `https://mainsite.com`)
+- Switching between root and subsite deployments requires a rebuild
 
 ---
 

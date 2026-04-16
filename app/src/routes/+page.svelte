@@ -1,15 +1,34 @@
 <script lang="ts">
-	import pb from '$lib/pocketbase';
-	import { PUBLIC_PB_URL } from '$env/static/public';
-
-	// Reference pb so it's not tree-shaken; harmless in dev, strips in prod if unused.
-	void pb;
+	// Landing page — two-card explainer, one live CTA.
 </script>
 
-<main class="min-h-screen flex items-center justify-center bg-slate-50">
-	<div class="max-w-md p-8 rounded-2xl bg-white shadow text-center space-y-2">
-		<h1 class="text-2xl font-semibold text-slate-900">UK Music Experiences</h1>
-		<p class="text-sm text-slate-500">SvelteKit skeleton — Phase 7.</p>
-		<p class="text-xs text-slate-400">PocketBase: {PUBLIC_PB_URL}</p>
-	</div>
-</main>
+<div class="h-full overflow-y-auto">
+	<main class="mx-auto w-full max-w-4xl px-4 py-12">
+		<h1 class="text-3xl font-bold text-slate-900">UK Music Experiences</h1>
+		<p class="mt-2 text-slate-600">
+			Find music opportunities across the UK — classes, ensembles, workshops, and more.
+		</p>
+
+		<div class="mt-8 grid gap-4 md:grid-cols-2">
+			<a
+				href="/search"
+				class="group block rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow"
+			>
+				<h2 class="text-lg font-semibold text-slate-900">For musicians</h2>
+				<p class="mt-2 text-sm text-slate-600">
+					Search opportunities by type, instrument, age, or location.
+				</p>
+				<span class="mt-4 inline-block text-sm font-medium text-sky-600 group-hover:text-sky-800">
+					Find opportunities →
+				</span>
+			</a>
+
+			<div class="rounded-2xl border border-slate-200 bg-white p-6 opacity-75">
+				<h2 class="text-lg font-semibold text-slate-900">For organisations</h2>
+				<p class="mt-2 text-sm text-slate-600">
+					Post classes, workshops, and ensembles. Registration coming soon.
+				</p>
+			</div>
+		</div>
+	</main>
+</div>

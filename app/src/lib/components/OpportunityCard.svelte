@@ -3,15 +3,9 @@
 
 	interface Props {
 		opportunity: OpportunityWithDistance;
-		selected?: boolean;
-		onSelect?: (id: string) => void;
 	}
 
-	let { opportunity, selected = false, onSelect }: Props = $props();
-
-	function handleClick() {
-		onSelect?.(opportunity.id);
-	}
+	let { opportunity }: Props = $props();
 
 	function formatDistance(d: number | null): string {
 		if (d === null) return '';
@@ -20,12 +14,9 @@
 	}
 </script>
 
-<button
-	type="button"
-	onclick={handleClick}
+<a
+	href="/opportunity/{opportunity.id}"
 	class="block w-full rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 hover:shadow"
-	class:ring-2={selected}
-	class:ring-sky-400={selected}
 >
 	<div class="flex items-start justify-between gap-2">
 		<h3 class="text-sm font-semibold text-slate-900">{opportunity.title}</h3>
@@ -44,4 +35,4 @@
 			<span class="text-slate-600">{formatDistance(opportunity.distance)}</span>
 		{/if}
 	</div>
-</button>
+</a>

@@ -30,7 +30,7 @@
 	}
 </script>
 
-<div class="flex h-screen flex-col bg-slate-50">
+<div class="flex h-full flex-col bg-slate-50">
 	<SearchFilters />
 
 	<div class="flex flex-1 flex-col overflow-hidden md:flex-row">
@@ -57,11 +57,7 @@
 				<p class="mb-2 text-xs text-slate-500">{filtered.length} result{filtered.length === 1 ? '' : 's'}</p>
 				<div class="space-y-2">
 					{#each filtered as opp (opp.id)}
-						<OpportunityCard
-							opportunity={opp}
-							selected={selectedId === opp.id}
-							onSelect={select}
-						/>
+						<OpportunityCard opportunity={opp} />
 					{/each}
 				</div>
 			{/if}

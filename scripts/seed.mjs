@@ -61,18 +61,129 @@ function parseCSVLine(line) {
   return line.split(',');
 }
 
-async function ensureCollection(pb, schema) {
-  try {
-    await pb.collections.getOne(schema.name);
-    console.log(`  ✓ collection "${schema.name}" already exists`);
-  } catch (err) {
-    if (err.status === 404) {
-      await pb.collections.create(schema);
-      console.log(`  ✓ created collection "${schema.name}"`);
+// System fields we must never delete from PocketBase collections.
+// Auth collections have more built-ins than base ones.
+const SYSTEM_FIELDS = new Set([
+  'id', 'created', 'updated',
+  'email', 'emailVisibility', 'verified', 'tokenKey', 'password' // auth
+]);
+
+function systemFieldsFor(collectionType) {
+  const s = new Set(['id', 'created', 'updated']);
+  if (collectionType === 'auth') {
+    for (const n of ['email', 'emailVisibility', 'verified', 'tokenKey', 'password']) s.add(n);
+  }
+  return s;
+}
+
+async function resolveRelations(pb, fields) {
+  // Convert { _relatesTo: 'users' } → { collectionId: '<users-id>' } in-place on a clone.
+  const out = [];
+  for (const f of fields) {
+    if (f.type === 'relation' && f._relatesTo) {
+      const target = await pb.collections.getOne(f._relatesTo);
+      const { _relatesTo, ...rest } = f;
+      out.push({ ...rest, collectionId: target.id });
     } else {
-      throw err;
+      out.push(f);
     }
   }
+  return out;
+}
+
+async function ensureCollection(pb, schema) {
+  console.log(`  > ensure collection "${schema.name}"`);
+  // Resolve relation targets first (they need PocketBase collection IDs, not names)
+  const resolvedFields = await resolveRelations(pb, schema.fields);
+  schema = { ...schema, fields: resolvedFields };
+
+  let existing = null;
+  try {
+    existing = await pb.collections.getOne(schema.name);
+  } catch (err) {
+    if (err.status !== 404) throw err;
+  }
+
+  if (!existing) {
+    await pb.collections.create(schema);
+    console.log(`  ✓ created collection "${schema.name}"`);
+    return;
+  }
+
+  // Reconcile: add missing fields, remove extras, patch mismatched required flags.
+  const actual = existing.fields || existing.schema || [];
+  const actualByName = Object.fromEntries(actual.map((f) => [f.name, f]));
+  const wantedNames = new Set(schema.fields.map((f) => f.name));
+  const systemFields = systemFieldsFor(existing.type);
+
+  const merged = [];
+  let changes = [];
+
+  // Keep system fields as-is, but strip any computed/server-only props that
+  // PocketBase does not accept on write (like `collectionName`).
+  function cleanField(f) {
+    const { collectionName, ...rest } = f;
+    return rest;
+  }
+
+  for (const f of actual) {
+    if (systemFields.has(f.name)) merged.push(cleanField(f));
+  }
+
+  // Add/update wanted fields
+  for (const wanted of schema.fields) {
+    const prev = actualByName[wanted.name];
+    if (!prev) {
+      merged.push(wanted);
+      changes.push(`added field "${wanted.name}"`);
+      continue;
+    }
+
+    // Never send a type change — PocketBase rejects it. Warn instead.
+    if (prev.type !== wanted.type) {
+      console.log(`  ⚠ field "${wanted.name}" has type "${prev.type}" but schema expects "${wanted.type}".`);
+      console.log(`    PocketBase does not allow type changes via update — delete + recreate the field manually.`);
+      merged.push(cleanField(prev)); // keep as-is
+      continue;
+    }
+
+    // Preserve prev entirely, only override the properties we actually care about.
+    const updated = cleanField(prev);
+    const patchKeys = ['required', 'max', 'min', 'maxSelect', 'minSelect', 'values', 'presentable', 'unique'];
+    for (const k of patchKeys) {
+      if (wanted[k] !== undefined && JSON.stringify(updated[k]) !== JSON.stringify(wanted[k])) {
+        updated[k] = wanted[k];
+        changes.push(`changed ${k} of "${wanted.name}": ${JSON.stringify(prev[k])} → ${JSON.stringify(wanted[k])}`);
+      }
+    }
+    merged.push(updated);
+  }
+
+  // Report removed extras (everything in actual that's not system and not wanted)
+  for (const f of actual) {
+    if (!systemFields.has(f.name) && !wantedNames.has(f.name)) {
+      changes.push(`removed extra field "${f.name}"`);
+    }
+  }
+
+  if (changes.length === 0) {
+    console.log(`  ✓ collection "${schema.name}" already matches`);
+    return;
+  }
+
+  const patch = {
+    fields: merged,
+    listRule: schema.listRule ?? existing.listRule,
+    viewRule: schema.viewRule ?? existing.viewRule,
+    createRule: schema.createRule ?? existing.createRule,
+    updateRule: schema.updateRule ?? existing.updateRule,
+    deleteRule: schema.deleteRule ?? existing.deleteRule
+  };
+  if (schema.indexes) patch.indexes = schema.indexes;
+
+  await pb.collections.update(existing.id, patch);
+  console.log(`  ✓ updated collection "${schema.name}":`);
+  for (const c of changes) console.log(`      - ${c}`);
 }
 
 function exitBatchRequired(reason) {
@@ -150,7 +261,7 @@ async function streamImport(pb, { csvPath, collection, mapRow, label }) {
 
   async function drain() {
     while (inflight.size > 0) {
-      await Promise.race(inflight).catch(() => {});
+      await Promise.race(inflight).catch(() => { });
     }
     if (firstError) throw firstError;
   }
@@ -189,7 +300,7 @@ async function streamImport(pb, { csvPath, collection, mapRow, label }) {
       }));
 
       while (inflight.size >= CONCURRENCY && !firstError) {
-        await Promise.race(inflight).catch(() => {});
+        await Promise.race(inflight).catch(() => { });
       }
     }
   }
@@ -248,6 +359,64 @@ const PLACES_SCHEMA = {
   ]
 };
 
+// Users is PocketBase's built-in auth collection. We just add custom fields.
+const USERS_SCHEMA = {
+  name: 'users',
+  type: 'auth',
+  fields: [
+    { name: 'role', type: 'select', required: true, maxSelect: 1, values: ['musician', 'organisation'] },
+    { name: 'display_name', type: 'text', required: true, max: 100 }
+  ]
+};
+
+// Relation targets are resolved by collection name at runtime (see main()).
+const ORGANISATIONS_SCHEMA = {
+  name: 'organisations',
+  type: 'base',
+  listRule: '',      // public read
+  viewRule: '',
+  createRule: "@request.auth.id != '' && @request.auth.role = 'organisation'",
+  updateRule: "@request.auth.id = user.id",
+  deleteRule: null,  // admin only
+  fields: [
+    { name: 'user', type: 'relation', required: true, maxSelect: 1, _relatesTo: 'users' },
+    { name: 'name', type: 'text', required: true, max: 200 },
+    { name: 'description', type: 'editor', required: false },
+    { name: 'verified', type: 'bool', required: false }
+  ]
+};
+
+const OPPORTUNITIES_SCHEMA = {
+  name: 'opportunities',
+  type: 'base',
+  listRule: '',
+  viewRule: '',
+  createRule: "@request.auth.id != '' && organisation.verified = true && organisation.user.id = @request.auth.id",
+  updateRule: "organisation.user.id = @request.auth.id",
+  deleteRule: "organisation.user.id = @request.auth.id",
+  fields: [
+    { name: 'organisation', type: 'relation', required: true, maxSelect: 1, _relatesTo: 'organisations' },
+    { name: 'title', type: 'text', required: true, max: 200 },
+    { name: 'description', type: 'editor', required: true },
+    {
+      name: 'type', type: 'select', required: true, maxSelect: 1,
+      values: ['Classes', 'Ensemble', 'Workshop', 'Performance', 'Lessons', 'Project']
+    },
+    { name: 'instruments', type: 'text', required: false, max: 500 },
+    { name: 'age_group', type: 'text', required: false, max: 100 },
+    { name: 'website', type: 'url', required: false },
+    { name: 'location_name', type: 'text', required: true, max: 300 },
+    { name: 'location_lat', type: 'number', required: true },
+    { name: 'location_lng', type: 'number', required: true },
+    { name: 'postcode', type: 'text', required: true, max: 10 },
+    { name: 'expires_at', type: 'date', required: false }
+  ],
+  indexes: [
+    'CREATE INDEX idx_opportunities_type ON opportunities (type)',
+    'CREATE INDEX idx_opportunities_postcode ON opportunities (postcode)'
+  ]
+};
+
 // --- Main -----------------------------------------------------------------
 async function main() {
   const pb = new PocketBase(PB_URL);
@@ -270,8 +439,12 @@ async function main() {
   console.log('  ✓ authenticated');
 
   console.log('\n→ Ensuring collections exist...');
-  await ensureCollection(pb, POSTCODES_SCHEMA);
+  // Order matters: relations must point to existing collections.
+  await ensureCollection(pb, OPPORTUNITIES_SCHEMA);
+  await ensureCollection(pb, ORGANISATIONS_SCHEMA);
   await ensureCollection(pb, PLACES_SCHEMA);
+  await ensureCollection(pb, POSTCODES_SCHEMA);
+  await ensureCollection(pb, USERS_SCHEMA);
 
   await streamImport(pb, {
     csvPath: POSTCODES_CSV,

@@ -5,7 +5,8 @@
   "private": true,
   "description": "Seed scripts for the UK Music Experiences PocketBase setup",
   "scripts": {
-    "seed": "node scripts/seed.mjs"
+    "seed": "node scripts/seed.mjs",
+    "verify": "node scripts/verify-schema.mjs"
   },
   "dependencies": {
     "pocketbase": "^0.26.8"

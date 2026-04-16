@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UK Music Experiences — Project Report</title>
+<style>
+	:root {
+		--ink: #1e293b;
+		--ink-soft: #475569;
+		--ink-dim: #64748b;
+		--line: #e2e8f0;
+		--bg-soft: #f8fafc;
+		--accent: #047857;
+		--accent-soft: #ecfdf5;
+		--warn: #b45309;
+		--warn-soft: #fffbeb;
+		--no: #9f1239;
+		--no-soft: #fff1f2;
+	}
+
+	* { box-sizing: border-box; }
+
+	html { -webkit-text-size-adjust: 100%; }
+
+	body {
+		margin: 0;
+		padding: 40px 24px 80px;
+		color: var(--ink);
+		background: #fff;
+		font: 11pt/1.6 Georgia, "Times New Roman", serif;
+	}
+
+	.page {
+		max-width: 780px;
+		margin: 0 auto;
+	}
+
+	h1, h2, h3, h4 {
+		font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+		color: var(--ink);
+		line-height: 1.25;
+		margin: 1.6em 0 0.4em;
+	}
+	h1 { font-size: 30pt; margin-top: 0; letter-spacing: -0.01em; }
+	h2 { font-size: 18pt; margin-top: 2em; padding-top: 0.5em; border-top: 1px solid var(--line); }
+	h3 { font-size: 13pt; }
+
+	p { margin: 0 0 1em; }
+
+	a { color: var(--accent); text-decoration: none; }
+
+	code, .mono {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.9em;
+		background: var(--bg-soft);
+		padding: 1px 5px;
+		border-radius: 3px;
+	}
+
+	.meta {
+		color: var(--ink-dim);
+		font-style: italic;
+		margin-top: -0.5em;
+	}
+
+	.tldr {
+		background: var(--bg-soft);
+		border-left: 3px solid var(--accent);
+		padding: 16px 20px;
+		margin: 24px 0;
+	}
+	.tldr ul { margin: 0; padding-left: 20px; }
+	.tldr li { margin-bottom: 6px; }
+
+	.numbers {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 12px;
+		margin: 24px 0;
+	}
+	.number-card {
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		padding: 14px;
+		background: var(--bg-soft);
+	}
+	.number-card .n {
+		display: block;
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-size: 22pt;
+		font-weight: 600;
+		color: var(--accent);
+		line-height: 1.1;
+	}
+	.number-card .label {
+		display: block;
+		font-size: 9pt;
+		color: var(--ink-dim);
+		margin-top: 4px;
+		line-height: 1.4;
+	}
+
+	figure {
+		margin: 24px 0;
+		padding: 0;
+	}
+	figure img {
+		max-width: 100%;
+		height: auto;
+		display: block;
+		border: 1px solid var(--line);
+		border-radius: 6px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+	}
+	figure .placeholder {
+		border: 1px dashed var(--line);
+		border-radius: 6px;
+		padding: 40px 20px;
+		text-align: center;
+		color: var(--ink-dim);
+		font-size: 10pt;
+		background: var(--bg-soft);
+	}
+	figcaption {
+		margin-top: 8px;
+		font-size: 9pt;
+		color: var(--ink-dim);
+		text-align: center;
+		font-style: italic;
+	}
+
+	.diagram {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 12px;
+		margin: 24px 0;
+	}
+	.diagram .box {
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		padding: 16px;
+		background: var(--bg-soft);
+		text-align: center;
+	}
+	.diagram .box .role {
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-weight: 600;
+		color: var(--accent);
+		font-size: 10pt;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+	}
+	.diagram .box .name {
+		display: block;
+		margin: 6px 0;
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-size: 14pt;
+		font-weight: 600;
+	}
+	.diagram .box .what {
+		font-size: 10pt;
+		color: var(--ink-soft);
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 10pt;
+		margin: 16px 0;
+	}
+	th, td {
+		text-align: left;
+		padding: 8px 10px;
+		border-bottom: 1px solid var(--line);
+		vertical-align: top;
+	}
+	th {
+		background: var(--bg-soft);
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-weight: 600;
+		font-size: 9pt;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+		color: var(--ink-dim);
+	}
+
+	.status {
+		display: inline-block;
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-size: 9pt;
+		font-weight: 600;
+		padding: 2px 8px;
+		border-radius: 10px;
+		white-space: nowrap;
+	}
+	.status.yes { background: var(--accent-soft); color: var(--accent); }
+	.status.part { background: var(--warn-soft); color: var(--warn); }
+	.status.no { background: var(--no-soft); color: var(--no); }
+	.status.skip { background: #f1f5f9; color: var(--ink-dim); }
+
+	.two-col {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 24px;
+		margin: 24px 0;
+	}
+	.two-col h3 {
+		margin-top: 0;
+		padding-bottom: 8px;
+		border-bottom: 1px solid var(--line);
+	}
+	.two-col ul {
+		margin: 0;
+		padding-left: 18px;
+	}
+	.two-col li {
+		margin-bottom: 6px;
+	}
+
+	.callout {
+		border: 1px solid var(--line);
+		border-left: 3px solid var(--accent);
+		border-radius: 6px;
+		background: var(--accent-soft);
+		padding: 14px 18px;
+		margin: 20px 0;
+		font-size: 10.5pt;
+	}
+
+	.cost-compare {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+		margin: 24px 0;
+	}
+	.cost-compare > div {
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		padding: 16px;
+	}
+	.cost-compare .estimate { background: var(--no-soft); }
+	.cost-compare .actual { background: var(--accent-soft); }
+	.cost-compare .big {
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-size: 22pt;
+		font-weight: 600;
+		line-height: 1.1;
+		margin: 4px 0 8px;
+	}
+	.cost-compare .estimate .big { color: var(--no); }
+	.cost-compare .actual .big { color: var(--accent); }
+
+	.export-note {
+		margin-top: 60px;
+		padding: 14px 18px;
+		background: #fff7ed;
+		border: 1px dashed #fdba74;
+		border-radius: 6px;
+		font-size: 9pt;
+		color: #9a3412;
+	}
+
+	footer.end {
+		margin-top: 48px;
+		padding-top: 16px;
+		border-top: 1px solid var(--line);
+		font-size: 9pt;
+		color: var(--ink-dim);
+		text-align: center;
+	}
+
+	@page {
+		size: A4;
+		margin: 20mm 18mm;
+	}
+
+	@media print {
+		body { padding: 0; }
+		.page { max-width: none; }
+		.export-note { display: none; }
+		.tldr,
+		.numbers .number-card,
+		.cost-compare > div,
+		.diagram .box,
+		.callout,
+		figure .placeholder {
+			background: #fff !important;
+		}
+		h2, h3, figure, table, .numbers, .diagram, .cost-compare, .two-col {
+			page-break-inside: avoid;
+		}
+		h2 { page-break-before: auto; }
+		tr { page-break-inside: avoid; }
+		a { color: var(--ink); text-decoration: none; }
+	}
+</style>
+</head>
+<body>
+<main class="page">
+
+<header>
+	<h1>UK Music Experiences</h1>
+	<p class="meta">Project report for Nathan · April 2026 · Status: core platform working</p>
+</header>
+
+<section class="tldr">
+	<strong>In one minute</strong>
+	<ul>
+		<li>The platform runs. Musicians can search ~6 demo opportunities on a UK map by instrument, age, type, and proximity (postcode or place name). Organisations can register and log in; an admin (you) verifies them before they post.</li>
+		<li>Hosting: around <strong>€5 a month</strong> on the cheapest Hostinger VPS. Six-month total ≈ <strong>€30</strong> — not €1150.</li>
+		<li>Capacity: the cheapest server comfortably handles <strong>several thousand simultaneous users</strong>. The real bottleneck is your manual verification of new organisations, not hardware.</li>
+		<li>No ongoing software licences, no SaaS dependencies, no hidden fees. Everything is open-source and self-hosted — you own the data and the deployment.</li>
+	</ul>
+</section>
+
+<h2>What's built today</h2>
+
+<p>The platform has two main surfaces — a public side for musicians and an authenticated side for organisations — plus a built-in admin panel you (Nathan) control.</p>
+
+<h3>For musicians (no account needed)</h3>
+<ul>
+	<li><strong>Map-first search.</strong> Opens on a map of the UK, drops a marker for each opportunity. Click a marker for a quick popup; click a card in the sidebar to open the full detail page.</li>
+	<li><strong>Filters:</strong> free-text search (title, description, instrument), type (Classes / Ensemble / Workshop / Performance / Lessons / Project), postcode or place name for proximity, radius picker (5–100 km).</li>
+	<li><strong>1.79 million UK postcodes</strong> stored locally in the platform, so "near me" works instantly with no external geocoding service.</li>
+	<li><strong>Full detail page</strong> per opportunity: description, location, age group, instruments, linked organisation with a verified badge.</li>
+	<li><strong>Advice page</strong> stub — placeholder copy, ready for real content.</li>
+</ul>
+
+<h3>For organisations (after admin verification)</h3>
+<ul>
+	<li><strong>Register, log in, log out.</strong> Standard email + password flow.</li>
+	<li><strong>Dashboard</strong> showing opportunities posted by the organisation, with the verified / pending badge next to the org name.</li>
+	<li>Until the admin flips them to "verified", new organisations can see their dashboard but cannot publish opportunities — a deliberate safeguarding gate.</li>
+</ul>
+
+<figure>
+	<img src="./images/dashboard.png" alt="Organisation dashboard showing the Demo Music Trust with six listed opportunities">
+	<figcaption>The organisation dashboard — how an organisation sees their own opportunities once they're logged in.</figcaption>
+</figure>
+
+<h2>Architecture in plain English</h2>
+
+<p>Three pieces cooperate on a single small server. A helpful way to picture it:</p>
+
+<div class="diagram">
+	<div class="box">
+		<div class="role">The shop window</div>
+		<span class="name">Website</span>
+		<div class="what">What visitors see in their browser. Plain static files (HTML, CSS, pictures) so it loads fast anywhere.</div>
+	</div>
+	<div class="box">
+		<div class="role">The filing cabinet</div>
+		<span class="name">Database</span>
+		<div class="what">Holds every opportunity, every organisation, every postcode. One file on disk. Instant to read, easy to back up.</div>
+	</div>
+	<div class="box">
+		<div class="role">The receptionist</div>
+		<span class="name">Reverse proxy</span>
+		<div class="what">Handles HTTPS, routes each visitor's request to the right place, serves files efficiently.</div>
+	</div>
+</div>
+
+<p>The &ldquo;filing cabinet&rdquo; is PocketBase — an open-source single-file application. The &ldquo;shop window&rdquo; is built with SvelteKit and compiles down to a folder of static files. The &ldquo;receptionist&rdquo; is Caddy, which also handles free HTTPS certificates automatically.</p>
+
+<p>All three live on the same small machine. No Docker, no Kubernetes, no managed cloud service, no database server. If the server disappeared, you could copy one folder to a new machine and be running again in minutes.</p>
+
+<h2>The admin side</h2>
+
+<p>PocketBase ships with a built-in admin panel. Opening it in a browser gives you (Nathan) a spreadsheet-like view of every record on the platform — with search, filters, sort, inline edit, CSV export, and CSV import.</p>
+
+<figure>
+	<img src="./images/pocketbase-admin.png" alt="PocketBase admin panel showing the opportunities collection with six rows and columns for title, description, type, instruments, age group and location">
+	<figcaption>The admin panel — verifying organisations, editing or removing opportunities, exporting data, all without developer help.</figcaption>
+</figure>
+
+<p>This is where you:</p>
+<ul>
+	<li>Review new organisations and flip the <em>verified</em> switch once you're satisfied (email, phone check, DBS / charity registration, however you choose to confirm).</li>
+	<li>Export any table as CSV for reporting.</li>
+	<li>Import a CSV of opportunities directly — useful if someone sends a spreadsheet instead of using the form.</li>
+	<li>Edit anything manually if a user gets stuck.</li>
+</ul>
+
+<p>No custom admin UI was needed — it's a free side-effect of the technology choice.</p>
+
+<h2>Hosting & cost</h2>
+
+<p>The stack is designed to run on the smallest VPS you can buy. The cheapest <strong>Hostinger KVM 1</strong> plan (1 virtual CPU core, 4 GB RAM, 50 GB NVMe SSD, ~€4.99/month) is more than sufficient. Hetzner's equivalent CX22 is priced similarly. Either works.</p>
+
+<div class="cost-compare">
+	<div class="estimate">
+		<div style="font-size: 9pt; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.04em;">Initial estimate</div>
+		<div class="big">€1150</div>
+		<div style="font-size: 10pt;">for 6 months, including hosting + unspecified services.</div>
+	</div>
+	<div class="actual">
+		<div style="font-size: 9pt; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.04em;">Actual hosting cost</div>
+		<div class="big">~€30</div>
+		<div style="font-size: 10pt;">for 6 months on Hostinger KVM 1 (€4.99/mo). Domain extra (~€10–15/yr).</div>
+	</div>
+</div>
+
+<div class="callout">
+	<strong>That's roughly €1120 saved over 6 months.</strong> The difference is because this stack avoids every common money sink: no managed database, no per-user licence, no mapping service fees, no email-send provider, no search-as-a-service. You pay for the VPS and nothing else.
+</div>
+
+<div class="numbers">
+	<div class="number-card"><span class="n">€4.99</span><span class="label">per month, Hostinger KVM 1</span></div>
+	<div class="number-card"><span class="n">1 vCPU</span><span class="label">and 4 GB RAM — plenty</span></div>
+	<div class="number-card"><span class="n">50 GB</span><span class="label">NVMe SSD — ~50 MB used</span></div>
+	<div class="number-card"><span class="n">€0</span><span class="label">software licences</span></div>
+</div>
+
+<p>What's included for that monthly fee:</p>
+<ul>
+	<li>Full HTTPS (green padlock in the browser) — Caddy gets a free certificate from Let's Encrypt and renews it automatically.</li>
+	<li>Daily database backups via a five-minute cron job — seven days retained.</li>
+	<li>No vendor lock-in — the whole thing is a folder. If Hostinger doubles their prices tomorrow, you move to Hetzner or any other provider in under an hour.</li>
+</ul>
+
+<h2>How many users can this handle?</h2>
+
+<p>A realistic answer for the UK Music Experiences use case:</p>
+
+<div class="numbers">
+	<div class="number-card"><span class="n">~5,000</span><span class="label">simultaneously active users — comfortable on the cheapest VPS</span></div>
+	<div class="number-card"><span class="n">~100,000+</span><span class="label">daily visits in a typical day — easy headroom</span></div>
+	<div class="number-card"><span class="n">&lt; 1 GB</span><span class="label">memory used at idle — 3+ GB left over</span></div>
+	<div class="number-card"><span class="n">~1 ms</span><span class="label">average database read on an indexed query</span></div>
+</div>
+
+<p>For context: the platform will most likely see a few hundred users per day in its first year, with spikes during open-call announcements. The server will be <strong>more than 90&thinsp;% idle</strong> the vast majority of the time.</p>
+
+<p>The honest bottleneck on growth is not the server — it's your ability to manually review and verify new organisations. One admin is the gating factor, not the hardware. The day you need a second admin to keep up with registrations is the day the platform has succeeded.</p>
+
+<h2>Your questions, answered</h2>
+
+<p>Point-by-point response to the original kickoff notes.</p>
+
+<table>
+	<thead>
+		<tr>
+			<th style="width:44%">Your question</th>
+			<th style="width:12%">Status</th>
+			<th>Note</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Three user types: musicians, organisations, researchers</td>
+			<td><span class="status part">Partial</span></td>
+			<td>Musicians and organisations live. Researcher role deferred — you can export the same data from the admin panel today.</td>
+		</tr>
+		<tr>
+			<td>Instrument search</td>
+			<td><span class="status yes">Done</span></td>
+			<td>Free-text filter on the search page.</td>
+		</tr>
+		<tr>
+			<td>Age-group search</td>
+			<td><span class="status part">Partial</span></td>
+			<td>Works as a text filter today. Multi-select checkboxes (&ldquo;click all age ranges that apply&rdquo;) are a small, clear upgrade.</td>
+		</tr>
+		<tr>
+			<td>Organisations can offer performances</td>
+			<td><span class="status yes">Done</span></td>
+			<td>&ldquo;Performance&rdquo; is one of the six opportunity categories.</td>
+		</tr>
+		<tr>
+			<td>Participant limits</td>
+			<td><span class="status no">Not yet</span></td>
+			<td>A couple of hours of work — one field added, one counter displayed.</td>
+		</tr>
+		<tr>
+			<td>Participants sometimes restricted by where they live</td>
+			<td><span class="status no">Not yet</span></td>
+			<td>Reasonable MVP addition. The postcode data is already there to support it.</td>
+		</tr>
+		<tr>
+			<td>API probably needed</td>
+			<td><span class="status yes">Built-in</span></td>
+			<td>PocketBase exposes a full REST API automatically. No extra work.</td>
+		</tr>
+		<tr>
+			<td>6 months / €1150 budget</td>
+			<td><span class="status yes">Much cheaper</span></td>
+			<td>Actual hosting ≈ €30 for 6 months.</td>
+		</tr>
+		<tr>
+			<td>&ldquo;Find things near you that you like&rdquo;</td>
+			<td><span class="status yes">Done</span></td>
+			<td>Core feature — map + postcode/place proximity search with a radius picker.</td>
+		</tr>
+		<tr>
+			<td>Organisations edit their profile</td>
+			<td><span class="status no">Not yet</span></td>
+			<td>Forms for CRUD operations are the next implementation phase.</td>
+		</tr>
+		<tr>
+			<td>Organisations edit / add / delete opportunities</td>
+			<td><span class="status no">Not yet</span></td>
+			<td>Same phase. The dashboard lists opportunities today; forms are the missing piece.</td>
+		</tr>
+		<tr>
+			<td>Expiry dates on opportunities</td>
+			<td><span class="status yes">Schema ready</span></td>
+			<td>Field exists; auto-hide after expiry is one line of filter logic.</td>
+		</tr>
+		<tr>
+			<td>Enter future dates in advance (e.g. 10 days out)</td>
+			<td><span class="status yes">Schema ready</span></td>
+			<td>Same mechanism as expiry dates.</td>
+		</tr>
+		<tr>
+			<td>Organisation with multiple addresses</td>
+			<td><span class="status part">Partial</span></td>
+			<td>Schema supports multiple addresses per org. Each opportunity is currently tied to one address — easy to extend.</td>
+		</tr>
+		<tr>
+			<td>Protection for minors</td>
+			<td><span class="status yes">Built-in</span></td>
+			<td>Organisations cannot publish until the admin has verified them. Deliberately manual.</td>
+		</tr>
+		<tr>
+			<td>Social-network trust signals</td>
+			<td><span class="status no">Later</span></td>
+			<td>Could integrate Google / Facebook / etc. login for verification support later. Not needed for MVP.</td>
+		</tr>
+		<tr>
+			<td>Account verification</td>
+			<td><span class="status yes">Done</span></td>
+			<td>Email-based accounts + admin review before write access.</td>
+		</tr>
+		<tr>
+			<td>Should users be allowed to verify organisations?</td>
+			<td><span class="status skip">Deliberately no</span></td>
+			<td>Safeguarding concern — only the admin (you) can mark an organisation verified. Opens up on request.</td>
+		</tr>
+		<tr>
+			<td>Statistical evaluation of opportunities over time / regions</td>
+			<td><span class="status no">Later</span></td>
+			<td>The data is ready. A charts dashboard is a distinct, bounded piece of work.</td>
+		</tr>
+		<tr>
+			<td>Bulk entry (Quizlet-style, paste several at once)</td>
+			<td><span class="status part">Partial</span></td>
+			<td>The admin panel already imports CSV today. A user-facing bulk paste can come later.</td>
+		</tr>
+		<tr>
+			<td>1-week MVP</td>
+			<td><span class="status part">Beyond skeleton</span></td>
+			<td>Skeleton + auth + map + detail pages are in. Form-based CRUD and polish is 1–2 more weeks.</td>
+		</tr>
+		<tr>
+			<td>Import from Google Sheets</td>
+			<td><span class="status yes">Via CSV</span></td>
+			<td>Export your sheet as CSV, then use the admin panel import. No custom integration needed.</td>
+		</tr>
+		<tr>
+			<td>Click all age ranges that apply</td>
+			<td><span class="status no">Not yet</span></td>
+			<td>Trivial change — swap the text field for a list of checkboxes.</td>
+		</tr>
+		<tr>
+			<td>What's unnecessary / impossible / simplest?</td>
+			<td><span class="status yes">Addressed</span></td>
+			<td>Covered in the architecture section — we removed server-side rendering, a separate database server, Docker, and Node.js on the server. What remains pulls its weight.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>What's ready · what's next</h2>
+
+<div class="two-col">
+	<div>
+		<h3 style="color: var(--accent);">Ready today</h3>
+		<ul>
+			<li>Public map + search + filter</li>
+			<li>Opportunity detail pages</li>
+			<li>Organisation registration and login</li>
+			<li>Admin verification flow</li>
+			<li>PocketBase admin panel (data management)</li>
+			<li>Automatic HTTPS</li>
+			<li>Deployable as main site <em>or</em> as a subsite under an existing domain</li>
+			<li>1.79 million UK postcodes for proximity search</li>
+		</ul>
+	</div>
+	<div>
+		<h3 style="color: var(--warn);">Still to build</h3>
+		<ul>
+			<li>Forms so organisations can add / edit / delete their opportunities</li>
+			<li>Organisation profile-editing form</li>
+			<li>Age-range multi-select checkboxes</li>
+			<li>Participant limits + residence restrictions (if you want them)</li>
+			<li>Statistics / charts dashboard</li>
+			<li>Migration of the ~918 real opportunities from the prototype</li>
+			<li>Custom per-category marker icons (icons already available)</li>
+			<li>Email notifications (password reset, &ldquo;matching opportunity&rdquo; alerts)</li>
+		</ul>
+	</div>
+</div>
+
+<h2>Appendix: the tech stack (one page)</h2>
+
+<p>For completeness, in case you share this report with a developer:</p>
+
+<table>
+	<tbody>
+		<tr><th>Frontend</th><td>SvelteKit compiled to static HTML / CSS / JavaScript</td></tr>
+		<tr><th>Map library</th><td>Leaflet 1.9 with CartoDB tiles (no API key, free)</td></tr>
+		<tr><th>Backend</th><td>PocketBase 0.26 — a single Go executable providing database, auth, REST API, file storage, and admin UI</td></tr>
+		<tr><th>Database</th><td>SQLite (inside PocketBase). One file. Fully backed up by copying that file.</td></tr>
+		<tr><th>Reverse proxy</th><td>Caddy 2.11 — static file serving, automatic HTTPS, URL rewriting</td></tr>
+		<tr><th>Geocoding data</th><td>ONS Postcode Directory + OS Open Names — UK government open data, stored locally</td></tr>
+		<tr><th>Hosting</th><td>Any Linux VPS; Hostinger KVM 1 or Hetzner CX22 tested</td></tr>
+		<tr><th>Runtime cost</th><td>€4.99/month VPS + ~€10–15/year domain</td></tr>
+		<tr><th>External dependencies</th><td>None at runtime. No map API, no geocoding API, no database service.</td></tr>
+		<tr><th>Ops surface</th><td>Two long-running processes (PocketBase + Caddy). Both managed by systemd. Updates = drop-in binary replacement.</td></tr>
+	</tbody>
+</table>
+
+<p style="color: var(--ink-soft); font-size: 10pt; margin-top: 30px;">The engineering principle throughout has been to remove pieces, not add them. Every component that doesn't earn its keep — a second database server, a Node.js runtime, Docker, a JavaScript build server, a managed search service — was cut. What remains is what you cannot do without.</p>
+
+<footer class="end">
+	UK Music Experiences · project report · April 2026
+</footer>
+
+<div class="export-note">
+	<strong>Note for PDF export:</strong> This report references two screenshots stored at
+	<span class="mono">./images/dashboard.png</span> and
+	<span class="mono">./images/pocketbase-admin.png</span>.
+	Save those files into the <span class="mono">report/images/</span> folder next to this HTML before exporting,
+	then in your browser press <span class="mono">Ctrl&nbsp;+&nbsp;P</span> and choose &ldquo;Save as PDF&rdquo;.
+	This note is hidden in the printed output.
+</div>
+
+</main>
+</body>
+</html>

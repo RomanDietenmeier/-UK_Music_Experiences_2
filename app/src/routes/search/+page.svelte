@@ -24,6 +24,10 @@
 	});
 
 	const filtered = $derived(filterOpportunities(all, $filters));
+
+	function select(id: string) {
+		selectedId = id;
+	}
 </script>
 
 <div class="flex h-screen flex-col bg-slate-50">
@@ -36,7 +40,7 @@
 				{selectedId}
 				center={$filters.proximityCenter}
 				radiusKm={$filters.proximityRadius}
-				onMarkerClick={(id) => (selectedId = id)}
+				onMarkerClick={select}
 			/>
 		</div>
 
@@ -56,7 +60,7 @@
 						<OpportunityCard
 							opportunity={opp}
 							selected={selectedId === opp.id}
-							onClick={(id) => (selectedId = id)}
+							onSelect={select}
 						/>
 					{/each}
 				</div>

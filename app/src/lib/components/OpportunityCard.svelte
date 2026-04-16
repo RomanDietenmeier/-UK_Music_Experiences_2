@@ -4,10 +4,14 @@
 	interface Props {
 		opportunity: OpportunityWithDistance;
 		selected?: boolean;
-		onClick?: (id: string) => void;
+		onSelect?: (id: string) => void;
 	}
 
-	let { opportunity, selected = false, onClick }: Props = $props();
+	let { opportunity, selected = false, onSelect }: Props = $props();
+
+	function handleClick() {
+		onSelect?.(opportunity.id);
+	}
 
 	function formatDistance(d: number | null): string {
 		if (d === null) return '';
@@ -18,7 +22,7 @@
 
 <button
 	type="button"
-	onclick={() => onClick?.(opportunity.id)}
+	onclick={handleClick}
 	class="block w-full rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 hover:shadow"
 	class:ring-2={selected}
 	class:ring-sky-400={selected}

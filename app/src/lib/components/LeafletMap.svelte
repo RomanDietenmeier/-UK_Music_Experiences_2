@@ -59,6 +59,7 @@
 
 	// Rebuild markers whenever opportunities change.
 	$effect(() => {
+		const opps = opportunities; // always read, so it's tracked
 		if (!L || !map) return;
 		const leaflet = L;
 		if (markersLayer) {
@@ -68,7 +69,7 @@
 		markersById.clear();
 
 		const group = leaflet.featureGroup();
-		for (const opp of opportunities) {
+		for (const opp of opps) {
 			const marker = leaflet.marker([opp.location_lat, opp.location_lng]);
 			marker.bindPopup(
 				`<strong>${escapeHtml(opp.title)}</strong><br/><em>${escapeHtml(opp.type)}</em><br/>${escapeHtml(opp.location_name)}`
@@ -83,16 +84,18 @@
 
 	// Manage proximity circle.
 	$effect(() => {
+		const c = center; // always read, so it's tracked
+		const r = radiusKm;
 		if (!L || !map) return;
 		const leaflet = L;
 		if (circle) {
 			circle.remove();
 			circle = null;
 		}
-		if (center) {
+		if (c) {
 			circle = leaflet
-				.circle([center.lat, center.lng], {
-					radius: radiusKm * 1000,
+				.circle([c.lat, c.lng], {
+					radius: r * 1000,
 					color: '#eab308',
 					fillColor: '#eab308',
 					fillOpacity: 0.08,
@@ -104,9 +107,14 @@
 	});
 
 	// Fly to the selected marker.
+	// NOTE: read `selectedId` unconditionally first so Svelte tracks it as a
+	// dependency even on the initial run when `map` is still null. Otherwise the
+	// `!map || !selectedId` short-circuit skips the selectedId read, and later
+	// changes don't retrigger the effect.
 	$effect(() => {
-		if (!map || !selectedId) return;
-		const marker = markersById.get(selectedId);
+		const id = selectedId;
+		if (!id || !map) return;
+		const marker = markersById.get(id);
 		if (!marker) return;
 		const { lat, lng } = marker.getLatLng();
 		map.flyTo([lat, lng], 13, { duration: 0.8 });

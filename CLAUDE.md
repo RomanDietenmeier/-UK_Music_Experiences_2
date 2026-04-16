@@ -2,10 +2,11 @@
 
 ## Project Overview
 
-Build a music opportunities platform for the UK connecting three user groups:
+Build a music opportunities platform for the UK connecting two user groups:
 - **Musicians** search for opportunities by instrument, age group, and location
-- **Organisations** post, manage, and edit opportunities
-- **Researchers** view aggregated data and export CSV
+- **Organisations** post, manage, and edit opportunities (after admin verification)
+
+The admin (Nathan) manages verifications and data exports via PocketBase's built-in admin UI. A dedicated `researcher` role may be added later if academic/policy users need self-serve data access.
 
 The platform is based in Farnham, UK. Child safeguarding and GDPR compliance are critical requirements.
 
@@ -43,7 +44,7 @@ A working React + Vite + Leaflet prototype lives in `20260319_old_prototype/`. I
 
 ### `users` (extends PocketBase built-in auth collection)
 PocketBase provides a built-in `users` auth collection. Extend it with:
-- `role` (select: `musician`, `organisation`, `researcher`, `admin`) — required
+- `role` (select: `musician`, `organisation`) — required. Admin users are handled via PocketBase's built-in superuser, not this field.
 - `display_name` (text) — required
 - `location_lat` (number) — optional
 - `location_lng` (number) — optional
@@ -84,13 +85,12 @@ UK place names (towns, cities, villages, localities) with coordinates. Imported 
 - `website` (url) — optional
 - `social_links` (json) — optional, e.g. `{"facebook": "...", "twitter": "..."}`
 - `verified` (bool) — default false, set by admin
-- `verification_documents` (file, multiple) — uploaded by org during registration
 - `addresses` (json) — array of `{label, street, city, postcode, lat, lng}`, supports multiple locations
 - `created` (auto)
 - `updated` (auto)
 
 **Access rules:**
-- List/View: everyone (but hide `verification_documents` from non-admin)
+- List/View: everyone
 - Create: authenticated users with role=organisation
 - Update: only the owning user OR admin
 - Delete: only admin
@@ -108,12 +108,11 @@ UK place names (towns, cities, villages, localities) with coordinates. Imported 
 - `location_lng` (number) — required for geo search
 - `postcode` (text) — required
 - `expires_at` (date) — optional, opportunity auto-hidden after this date
-- `status` (select: `draft`, `published`, `archived`) — default `draft`
 - `created` (auto)
 - `updated` (auto)
 
 **Access rules:**
-- List/View: everyone can see opportunities where `status = "published"`
+- List/View: everyone (opportunities are immediately visible once created)
 - Create: authenticated users whose related organisation has `verified = true`
 - Update: only the organisation owner OR admin
 - Delete: only the organisation owner OR admin
@@ -188,10 +187,8 @@ src/
 │   │   │   └── [id]/
 │   │   │       └── edit/
 │   │   │           └── +page.svelte # Org: edit opportunity
-│   │   ├── organisation/
-│   │   │   └── +page.svelte    # Org: edit profile, view verification status
-│   │   └── data/
-│   │       └── +page.svelte    # Researcher: data view + CSV export
+│   │   └── organisation/
+│   │       └── +page.svelte    # Org: edit profile, view verification status
 │   ├── auth/
 │   │   ├── login/
 │   │   │   └── +page.svelte
@@ -386,37 +383,11 @@ Create one synthetic organisation (e.g. "Demo Music Trust", verified=true) and l
 
 ---
 
-## CSV Export (Researcher Feature)
+## Data Export (Admin Feature)
 
-The researcher dashboard should:
-1. Fetch all published opportunities (paginated, fetch all pages)
-2. Allow filtering by date range, region, instrument, age group
-3. Generate CSV client-side using a simple function:
+For the skeleton, CSV export is handled via PocketBase's built-in admin UI (`/_/`) — the admin (Nathan) can export any collection to CSV directly. No custom UI needed.
 
-```js
-function exportToCSV(data, filename) {
-  const headers = Object.keys(data[0]);
-  const csvRows = [
-    headers.join(','),
-    ...data.map(row =>
-      headers.map(h => {
-        const val = row[h] ?? '';
-        // Escape commas and quotes
-        return typeof val === 'string' && (val.includes(',') || val.includes('"'))
-          ? `"${val.replace(/"/g, '""')}"`
-          : val;
-      }).join(',')
-    )
-  ];
-  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-```
+**Future enhancement:** If self-serve data access is required for researchers/academics, add a dedicated `researcher` role and a `/dashboard/data` route that fetches published opportunities and generates CSV client-side.
 
 ---
 
@@ -424,12 +395,13 @@ function exportToCSV(data, filename) {
 
 1. User registers with role = `organisation`
 2. User fills out organisation profile (name, description, addresses)
-3. User uploads verification documents (DBS certificates, charity registration, etc.)
-4. Admin reviews in PocketBase admin UI (`/_/`) — sets `verified = true`
-5. Until verified, organisation CANNOT create opportunities (enforced via PocketBase access rules)
-6. Verified badge appears on the organisation's public profile
+3. Admin reviews in PocketBase admin UI (`/_/`) — confirms legitimacy via out-of-band check (email, phone, DBS/charity registration), then sets `verified = true`
+4. Until verified, organisation CANNOT create opportunities (enforced via PocketBase access rules)
+5. Verified badge appears on the organisation's public profile
 
 The verification is manual — Nathan reviews each organisation through PocketBase's built-in admin dashboard. This is intentional for child safeguarding. Do NOT automate this.
+
+**Future enhancement:** Add a `verification_documents` (file, multiple) field for orgs to upload DBS certificates / charity registration during signup. For the skeleton, verification is done out-of-band.
 
 ---
 
@@ -486,7 +458,7 @@ npx svelte-add@latest tailwind
 Design principles:
 - Clean, modern, accessible (WCAG AA minimum)
 - Mobile-first responsive design
-- The landing page should clearly explain the three user types (musicians, organisations, researchers) with distinct calls-to-action
+- The landing page should clearly explain the two user types (musicians, organisations) with distinct calls-to-action
 - Search page: interactive Leaflet map with a filter bar (text search, type dropdown, postcode + radius proximity) and results as cards
 - Organisation dashboard: simple CRUD table/list for their opportunities
 - Verified organisations show a trust badge
@@ -572,7 +544,8 @@ This copies the entire PocketBase data directory (database + uploaded files) dai
 - User-facing bulk opportunity import (Quizlet-style) — add later
 - Email notifications for matching opportunities — add later
 - Real-time subscriptions/live updates — add later
-- Statistical charts for researchers — MVP is CSV export only
+- Dedicated researcher role/dashboard — admin exports data via PocketBase admin UI for now
+- Statistical charts/analytics dashboards — out of scope for skeleton
 - Mobile app — the responsive web app is sufficient
 - Social login beyond Google — add later
 - Advanced admin dashboard — PocketBase's built-in admin is sufficient

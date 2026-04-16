@@ -8,7 +8,11 @@
       "Read(//c/c/Users/roman/Documents/projects/UK_Music_Experiences/app/**)",
       "Bash(curl -s http://localhost:5173/advice)",
       "Bash(curl -s http://localhost:5173/opportunity/0crfrmpr057msyn)",
-      "Bash(curl -s http://localhost:5173/opportunity/does-not-exist)"
+      "Bash(curl -s http://localhost:5173/opportunity/does-not-exist)",
+      "Bash(curl -s http://localhost:5173/auth/login)",
+      "Bash(curl -s http://localhost:5173/auth/register)",
+      "Bash(curl -s http://localhost:5173/dashboard)",
+      "Bash(curl -s http://localhost:5173/dashboard/opportunities)"
     ]
   }
 }

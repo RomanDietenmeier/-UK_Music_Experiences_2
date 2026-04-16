@@ -23,12 +23,19 @@
 				</span>
 			</a>
 
-			<div class="rounded-2xl border border-slate-200 bg-white p-6 opacity-75">
+			<a
+				href="/auth/register"
+				class="group block rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow"
+			>
 				<h2 class="text-lg font-semibold text-slate-900">For organisations</h2>
 				<p class="mt-2 text-sm text-slate-600">
-					Post classes, workshops, and ensembles. Registration coming soon.
+					Post classes, workshops, and ensembles. Verification by the platform admin is
+					required before opportunities go live.
 				</p>
-			</div>
+				<span class="mt-4 inline-block text-sm font-medium text-sky-600 group-hover:text-sky-800">
+					Register your organisation →
+				</span>
+			</a>
 		</div>
 	</main>
 </div>

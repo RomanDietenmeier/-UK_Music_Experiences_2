@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import pb from '$lib/pocketbase';
 	import type { Opportunity, Organisation } from '$lib/types';
 
@@ -33,7 +34,7 @@
 
 <div class="h-full overflow-y-auto">
 	<main class="mx-auto w-full max-w-3xl px-4 py-8">
-		<a href="/search" class="text-sm text-sky-600 hover:text-sky-800">← Back to search</a>
+		<a href={resolve('/search')} class="text-sm text-sky-600 hover:text-sky-800">← Back to search</a>
 
 		{#if loading}
 			<p class="mt-6 text-sm text-slate-500">Loading…</p>

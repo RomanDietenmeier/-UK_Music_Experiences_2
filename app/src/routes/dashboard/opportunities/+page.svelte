@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 	import pb from '$lib/pocketbase';
 	import { currentUser } from '$lib/stores/auth';
 	import type { Opportunity, Organisation } from '$lib/types';
@@ -42,7 +43,7 @@
 
 <div class="h-full overflow-y-auto">
 	<main class="mx-auto w-full max-w-3xl px-4 py-8">
-		<a href="/dashboard" class="text-sm text-sky-600 hover:text-sky-800">← Dashboard</a>
+		<a href={resolve('/dashboard')} class="text-sm text-sky-600 hover:text-sky-800">← Dashboard</a>
 
 		{#if loading}
 			<p class="mt-6 text-sm text-slate-500">Loading…</p>
@@ -86,7 +87,7 @@
 					{#each opps as opp (opp.id)}
 						<li>
 							<a
-								href="/opportunity/{opp.id}"
+								href={resolve('/opportunity/[id]', { id: opp.id })}
 								class="block rounded-lg border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:shadow"
 							>
 								<div class="flex items-start justify-between gap-2">

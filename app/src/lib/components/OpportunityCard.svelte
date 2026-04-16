@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { OpportunityWithDistance } from '$lib/filter';
 
 	interface Props {
@@ -15,7 +16,7 @@
 </script>
 
 <a
-	href="/opportunity/{opportunity.id}"
+	href={resolve('/opportunity/[id]', { id: opportunity.id })}
 	class="block w-full rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 hover:shadow"
 >
 	<div class="flex items-start justify-between gap-2">

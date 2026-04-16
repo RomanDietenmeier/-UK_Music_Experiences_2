@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { currentUser } from '$lib/stores/auth';
 
 	let { children } = $props();
@@ -8,7 +9,7 @@
 	// the redirect fires automatically.
 	$effect(() => {
 		if ($currentUser === null) {
-			goto('/auth/login');
+			goto(resolve('/auth/login'));
 		}
 	});
 </script>

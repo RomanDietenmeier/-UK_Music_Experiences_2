@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import pb from '$lib/pocketbase';
 
 	let email = $state('');
@@ -13,7 +14,7 @@
 		error = '';
 		try {
 			await pb.collection('users').authWithPassword(email, password);
-			await goto('/dashboard');
+			await goto(resolve('/dashboard'));
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Login failed';
 		} finally {
@@ -64,7 +65,7 @@
 
 		<p class="mt-6 text-sm text-slate-600">
 			No account?
-			<a href="/auth/register" class="text-sky-600 hover:text-sky-800">Register →</a>
+			<a href={resolve('/auth/register')} class="text-sky-600 hover:text-sky-800">Register →</a>
 		</p>
 	</main>
 </div>

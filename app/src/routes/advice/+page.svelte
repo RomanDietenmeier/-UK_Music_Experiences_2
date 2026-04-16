@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Placeholder advice page — static copy, rewrite as content is finalised.
+	import { resolve } from '$app/paths';
 </script>
 
 <div class="h-full overflow-y-auto">
@@ -24,7 +24,7 @@
 		</article>
 
 		<a
-			href="/search"
+			href={resolve('/search')}
 			class="mt-8 inline-block text-sm font-medium text-sky-600 hover:text-sky-800"
 		>
 			Start searching →

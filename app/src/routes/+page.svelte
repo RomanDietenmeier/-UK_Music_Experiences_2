@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Landing page — two-card explainer, one live CTA.
+	import { resolve } from '$app/paths';
 </script>
 
 <div class="h-full overflow-y-auto">
@@ -11,7 +11,7 @@
 
 		<div class="mt-8 grid gap-4 md:grid-cols-2">
 			<a
-				href="/search"
+				href={resolve('/search')}
 				class="group block rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow"
 			>
 				<h2 class="text-lg font-semibold text-slate-900">For musicians</h2>
@@ -24,7 +24,7 @@
 			</a>
 
 			<a
-				href="/auth/register"
+				href={resolve('/auth/register')}
 				class="group block rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:shadow"
 			>
 				<h2 class="text-lg font-semibold text-slate-900">For organisations</h2>

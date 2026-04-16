@@ -493,16 +493,42 @@ yoursite.com {
 
 ---
 
+## Scripts
+
+All scripts live in `scripts/` and run via `npm run <name>`. They read admin credentials from a `.env` file at the project root (see `.env.example`):
+
+```
+PB_URL=http://127.0.0.1:8090
+PB_EMAIL=your-admin@example.com
+PB_PASSWORD=your-admin-password
+```
+
+Before running any script, enable the **Batch API** in PocketBase (admin UI → Settings → Batch API → enable, max requests ≥ 50).
+
+| Script | Command | Purpose | Safe in production? |
+|--------|---------|---------|---------------------|
+| `setup.mjs` | `npm run setup` | Creates/reconciles all collections and bulk-imports `postcodes.csv` (~1.7M rows) and `places.csv` (~21K rows) from `data_exports/`. Idempotent, resumable. | ✅ Yes |
+| `verify.mjs` | `npm run verify` | Read-only integrity check. Confirms collections and fields match what CLAUDE.md expects. Exits non-zero on mismatch — wire into CI. | ✅ Yes |
+| `faker.mjs` | `npm run faker` | Dev only. Seeds a demo organisation + 6 synthetic opportunities. Refuses to run against non-localhost `PB_URL` unless `FAKER_FORCE=1` is set. | ❌ No |
+
+Shared helpers (env loading, admin auth) live in `scripts/_common.mjs`.
+
+**Generating the CSVs** — `data_exports/postcodes.csv` and `places.csv` come from the Jupyter notebook `ons_postcode_extraction.ipynb`. Run it once against the ONS Postcode Directory to produce both CSVs before running `npm run setup`.
+
+---
+
 ## Development Setup
 
 ### Local development:
 1. Download PocketBase binary for your OS
 2. Run: `./pocketbase serve` (starts on localhost:8090)
-3. Open `localhost:8090/_/` to set up admin account and create collections
-4. Import ONS Postcode Directory into `postcodes` collection (one-time, ~1.7M rows) and OS Open Names into `places` collection (~30K–50K rows)
-5. Seed a few synthetic demo opportunities via the admin UI (see "Synthetic Demo Data" section)
-6. In a second terminal: `npm run dev` (SvelteKit dev server on localhost:5173)
-7. In development, point the PocketBase client at `http://127.0.0.1:8090`
+3. Open `localhost:8090/_/` to create a superuser and enable the Batch API
+4. Create a `.env` file at the project root (copy from `.env.example`)
+5. Run `ons_postcode_extraction.ipynb` to produce `data_exports/postcodes.csv` and `places.csv`
+6. `npm install` then `npm run setup` — creates all collections and imports the CSVs
+7. `npm run verify` — confirms the schema matches
+8. `npm run faker` — seeds a demo org + opportunities so you can see data in the UI
+9. `cd app && npm run dev` — SvelteKit dev server on localhost:5173
 
 **Note:** Leaflet CSS must be imported in your map component: `import 'leaflet/dist/leaflet.css'`
 

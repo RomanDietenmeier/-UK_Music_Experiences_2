@@ -9,6 +9,9 @@ Build a music opportunities platform for the UK connecting three user groups:
 
 The platform is based in Farnham, UK. Child safeguarding and GDPR compliance are critical requirements.
 
+### Old Prototype Reference
+A working React + Vite + Leaflet prototype lives in `20260319_old_prototype/`. It displays ~918 geocoded UK music opportunities on an interactive map with a linked table. Reference it for Leaflet patterns (`src/components/OpportunityMap.tsx`), filter logic (`src/hooks/useStoreFilter.ts`), icon assets (`public/symbols/`), and the full dataset (`src/data/opportunities.json`) when ready to migrate real data.
+
 ---
 
 ## Tech Stack
@@ -17,10 +20,12 @@ The platform is based in Farnham, UK. Child safeguarding and GDPR compliance are
 |-------|-----------|-------|
 | Backend/DB/Auth/API | **PocketBase** | Single Go binary. SQLite, built-in auth, REST API, admin UI, file storage. Runs on port 8090. |
 | Frontend | **SvelteKit** (static adapter) | Compiles to static HTML/CSS/JS. No Node.js on production server. All API calls happen client-side via PocketBase JS SDK. |
+| Map | **Leaflet** (1.9+) | Used directly in Svelte via `onMount` — no wrapper library. Interactive map is the primary search UI. |
+| Tiles | **CartoDB light_all** | `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png` — free, no API key. |
+| Geo | **ONS Postcode Directory** + **OS Open Names** (both local) + **Haversine formula** | Postcodes (~1.7M rows) and place names (~30K–50K rows) imported into PocketBase. Every location lookup is a local DB query (~1ms). Haversine for distance calc. Bounding-box pre-filter + distance sort. |
 | Reverse proxy | **Caddy** | Automatic HTTPS, serves static files, proxies `/api/*` and `/_/*` to PocketBase. |
 | Hosting | **Hetzner CX23** | €4.15/mo, 2 vCPU, 4GB RAM, 40GB NVMe. Production target. |
 | Search | **SQLite FTS5** (built into PocketBase) + client-side JS cache | |
-| Geo | **Haversine formula** in application code | No PostGIS. Bounding-box pre-filter + distance sort. |
 
 ### What is NOT in this stack
 - No Docker
@@ -29,6 +34,8 @@ The platform is based in Farnham, UK. Child safeguarding and GDPR compliance are
 - No Coolify or any PaaS layer
 - No server-side rendering (static SvelteKit only)
 - No Redis or external caching
+- No Google Maps, Mapbox, or paid map APIs
+- No external geocoding API dependency (postcodes.io, etc.) — postcode data is local
 
 ---
 
@@ -43,6 +50,32 @@ PocketBase provides a built-in `users` auth collection. Extend it with:
 - `postcode` (text) — optional
 - `bio` (text) — optional
 - `avatar` (file) — optional
+
+### `postcodes` (ONS Postcode Directory)
+Every live UK postcode with coordinates. Imported once from the ONS Postcode Directory CSV (~1.7M rows, adds ~50MB to SQLite). This eliminates all external geocoding API calls for postcode lookups.
+- `postcode` (text, indexed) — normalized format, e.g. `"GU9 7AH"`
+- `lat` (number)
+- `lng` (number)
+
+**Access rules:**
+- List/View: everyone (public read-only)
+- Create/Update/Delete: admin only
+
+**Import:** One-time script reads the ONS CSV and bulk-inserts into PocketBase via the Admin API. See "Development Setup" section.
+
+### `places` (OS Open Names)
+UK place names (towns, cities, villages, localities) with coordinates. Imported from the OS Open Names dataset (free Ordnance Survey open data). This lets users search by place name (e.g. "Farnham", "London") without any external API call.
+- `name` (text, indexed) — place name, e.g. `"Farnham"`
+- `type` (text) — e.g. `"Town"`, `"City"`, `"Village"`, `"Suburb"`
+- `lat` (number)
+- `lng` (number)
+- `county` (text, optional)
+
+**Access rules:**
+- List/View: everyone (public read-only)
+- Create/Update/Delete: admin only
+
+**Import:** One-time script, same pattern as postcodes. Filter to populated places only (towns, cities, villages, suburbs) to keep the collection small (~30K–50K rows).
 
 ### `organisations`
 - `user` (relation → users) — required, one-to-one with the user account
@@ -66,26 +99,21 @@ PocketBase provides a built-in `users` auth collection. Extend it with:
 - `organisation` (relation → organisations) — required
 - `title` (text) — required
 - `description` (editor/rich text) — required
-- `instruments` (select, multiple) — e.g. `["violin", "guitar", "piano", "voice", "drums", "flute", "cello", "trumpet", "saxophone", "clarinet", "any"]`
-- `age_min` (number) — minimum age, optional (null = no minimum)
-- `age_max` (number) — maximum age, optional (null = no maximum)
+- `type` (select: `Classes`, `Ensemble`, `Workshop`, `Performance`, `Lessons`, `Project`) — required. The category of opportunity, each with a map marker icon.
+- `instruments` (text) — optional, freeform (e.g. `"Guitar, Piano"` or `"Any"`)
+- `age_group` (text) — optional, freeform (e.g. `"5-11"`, `"18+"`, `"All Ages"`)
+- `website` (url) — optional, link to the opportunity's own page
 - `location_name` (text) — human-readable location, required
 - `location_lat` (number) — required for geo search
 - `location_lng` (number) — required for geo search
 - `postcode` (text) — required
-- `participant_limit` (number) — optional, 0 or null = unlimited
-- `current_participants` (number) — default 0
-- `expires_at` (date) — required, opportunity auto-hidden after this date
-- `starts_at` (date) — optional, when the opportunity begins
-- `recurring` (bool) — default false
-- `location_restricted` (bool) — default false, if true only users in certain area can participate
-- `location_restriction_radius_km` (number) — optional, radius in km for location restriction
+- `expires_at` (date) — optional, opportunity auto-hidden after this date
 - `status` (select: `draft`, `published`, `archived`) — default `draft`
 - `created` (auto)
 - `updated` (auto)
 
 **Access rules:**
-- List/View: everyone can see opportunities where `status = "published"` and `expires_at > now`
+- List/View: everyone can see opportunities where `status = "published"`
 - Create: authenticated users whose related organisation has `verified = true`
 - Update: only the organisation owner OR admin
 - Delete: only the organisation owner OR admin
@@ -132,11 +160,12 @@ src/
 │   ├── geo.js                  # Haversine distance calculation
 │   ├── stores/
 │   │   ├── auth.js             # Auth state store
+│   │   ├── filters.js          # Search/filter state (query, type, proximity)
 │   │   └── search.js           # Search state + cached results
 │   └── components/
+│       ├── LeafletMap.svelte   # Interactive Leaflet map with markers + popups
 │       ├── OpportunityCard.svelte
-│       ├── SearchFilters.svelte
-│       ├── MapEmbed.svelte     # Simple map showing opportunity location
+│       ├── SearchFilters.svelte # Text search + type dropdown + postcode proximity
 │       ├── OrgBadge.svelte     # Verified badge for organisations
 │       ├── Navbar.svelte
 │       ├── Footer.svelte
@@ -186,6 +215,48 @@ export default pb;
 ```
 
 Use the environment-appropriate URL. In development, PocketBase runs locally. In production, Caddy proxies `/api/*` to PocketBase.
+
+---
+
+## Leaflet Map Integration
+
+The interactive map is the primary search UI. Leaflet is used directly in Svelte (no wrapper library).
+
+### Setup pattern:
+```svelte
+<!-- src/lib/components/LeafletMap.svelte -->
+<script>
+  import { onMount, onDestroy } from 'svelte';
+  import L from 'leaflet';
+  import 'leaflet/dist/leaflet.css';
+
+  let mapElement;
+  let map;
+
+  onMount(() => {
+    map = L.map(mapElement).setView([54.5, -2], 6); // Center of UK
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+  });
+
+  onDestroy(() => { if (map) map.remove(); });
+</script>
+
+<div bind:this={mapElement} style="height: 100%; width: 100%;"></div>
+```
+
+### Map defaults:
+- Center: `[54.5, -2]` (center of UK), zoom: `6` (shows full UK)
+- FlyTo on selection: zoom `13`, duration `0.8s`
+
+### Markers:
+- One marker per opportunity with coordinates
+- Click marker → popup with title, type, location name
+- Future enhancement: custom icons per opportunity `type`, linked hover with table
+
+### Proximity circle:
+When a user searches by postcode, show a `L.circle()` overlay at the resolved coordinates with the selected search radius.
 
 ---
 
@@ -285,13 +356,33 @@ export function boundingBox(lat, lng, radiusKm) {
 ```
 
 ### Geo search flow:
-1. Get user's location (postcode → lat/lng via free API like postcodes.io)
-2. Calculate bounding box for the desired radius
-3. Query PocketBase with filter: `location_lat >= minLat && location_lat <= maxLat && location_lng >= minLng && location_lng <= maxLng`
-4. Client-side: calculate actual Haversine distance for each result and sort by proximity
-5. Cache the results
+1. User enters a location (could be a postcode like `"GU9 7AH"` or a place name like `"Farnham"`)
+2. Detect if input looks like a UK postcode (regex: `/^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i`)
+   - **If postcode:** query the local `postcodes` collection → instant lat/lng (~1ms)
+   - **If place name:** query the local `places` collection (`name ~ "Farnham"`) → instant lat/lng (~1ms)
+3. Calculate bounding box for the desired radius
+4. Query PocketBase with filter: `location_lat >= minLat && location_lat <= maxLat && location_lng >= minLng && location_lng <= maxLng`
+5. Client-side: calculate actual Haversine distance for each result and sort by proximity
+6. Cache the results
 
-Use https://postcodes.io (free, no API key needed) for UK postcode → lat/lng conversion.
+**Both lookups are local.** Postcodes come from the ONS Postcode Directory, place names from OS Open Names — both free UK government data, both imported into PocketBase. Every search resolves in ~1ms with zero network calls, zero rate limits, and zero external dependencies.
+
+---
+
+## Synthetic Demo Data
+
+For the skeleton app, seed PocketBase with a handful of synthetic opportunities via the admin UI (`/_/`). No data import scripts needed yet. Example records:
+
+| title | type | location_name | postcode | lat | lng | age_group | instruments |
+|-------|------|---------------|----------|-----|-----|-----------|-------------|
+| Farnham Youth Guitar Workshop | Workshop | Farnham Maltings, Farnham | GU9 7QR | 51.214 | -0.799 | 8-16 | Guitar |
+| Bristol Community Choir | Ensemble | St George's, Bristol | BS1 5RR | 51.454 | -2.597 | 18+ | Voice |
+| London Piano Masterclass | Classes | Royal Academy, London | W1B 1BS | 51.518 | -0.144 | All Ages | Piano |
+| Brighton Jazz Ensemble | Ensemble | The Old Market, Brighton | BN1 1NF | 50.829 | -0.137 | 14+ | Saxophone, Trumpet |
+| Manchester Drum Lessons | Lessons | Band on the Wall, Manchester | M4 5JZ | 53.485 | -2.236 | 5-11 | Drums |
+| Edinburgh Youth Orchestra | Performance | Usher Hall, Edinburgh | EH1 2EA | 55.947 | -3.207 | 11-18 | Any |
+
+Create one synthetic organisation (e.g. "Demo Music Trust", verified=true) and link all demo opportunities to it. This gives enough data to test the map, filters, and search.
 
 ---
 
@@ -396,7 +487,7 @@ Design principles:
 - Clean, modern, accessible (WCAG AA minimum)
 - Mobile-first responsive design
 - The landing page should clearly explain the three user types (musicians, organisations, researchers) with distinct calls-to-action
-- Search page: prominent filter bar (instrument, age, location/radius) with results as cards
+- Search page: interactive Leaflet map with a filter bar (text search, type dropdown, postcode + radius proximity) and results as cards
 - Organisation dashboard: simple CRUD table/list for their opportunities
 - Verified organisations show a trust badge
 - Use a professional but warm color palette suitable for a music/arts context
@@ -436,8 +527,12 @@ yoursite.com {
 1. Download PocketBase binary for your OS
 2. Run: `./pocketbase serve` (starts on localhost:8090)
 3. Open `localhost:8090/_/` to set up admin account and create collections
-4. In a second terminal: `npm run dev` (SvelteKit dev server on localhost:5173)
-5. In development, point the PocketBase client at `http://127.0.0.1:8090`
+4. Import ONS Postcode Directory into `postcodes` collection (one-time, ~1.7M rows) and OS Open Names into `places` collection (~30K–50K rows)
+5. Seed a few synthetic demo opportunities via the admin UI (see "Synthetic Demo Data" section)
+6. In a second terminal: `npm run dev` (SvelteKit dev server on localhost:5173)
+7. In development, point the PocketBase client at `http://127.0.0.1:8090`
+
+**Note:** Leaflet CSS must be imported in your map component: `import 'leaflet/dist/leaflet.css'`
 
 ### Production deployment:
 1. Build SvelteKit: `npm run build`
@@ -473,7 +568,8 @@ This copies the entire PocketBase data directory (database + uploaded files) dai
 
 ## What NOT to Build (Out of Scope for MVP)
 
-- Bulk opportunity import (Quizlet-style) — add later
+- Bulk data import from CSV/KML — skeleton uses synthetic demo data; real data migration comes later
+- User-facing bulk opportunity import (Quizlet-style) — add later
 - Email notifications for matching opportunities — add later
 - Real-time subscriptions/live updates — add later
 - Statistical charts for researchers — MVP is CSV export only
@@ -481,6 +577,8 @@ This copies the entire PocketBase data directory (database + uploaded files) dai
 - Social login beyond Google — add later
 - Advanced admin dashboard — PocketBase's built-in admin is sufficient
 - Payment/subscription system — not needed
+- Map clustering, heatmaps, or route planning — add later
+- Custom marker icons per type — add later (start with default Leaflet markers)
 
 ---
 
@@ -488,8 +586,8 @@ This copies the entire PocketBase data directory (database + uploaded files) dai
 
 This is a two-process production stack:
 - **Caddy** (reverse proxy + HTTPS + static files)
-- **PocketBase** (database + auth + API + file storage + admin)
+- **PocketBase** (database + auth + API + file storage + admin + local postcode geocoding)
 
-All frontend logic runs in the browser. No server-side rendering. No Docker. No Node.js on the server. SvelteKit compiles to static files at build time.
+The interactive **Leaflet map** is the primary UI for musicians discovering opportunities. All frontend logic runs in the browser. No server-side rendering. No Docker. No Node.js on the server. No external API dependencies for geocoding. SvelteKit compiles to static files at build time.
 
 Total VPS RAM usage: ~150MB. Total 6-month hosting cost: €25.
